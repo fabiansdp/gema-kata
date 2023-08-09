@@ -1,8 +1,15 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
 const ChatPage = ({userName}) => {
-    const [isRecording, setIsRecording] = useState(!false)
+    const [isRecording, setIsRecording] = useState(false)
     const [finishRecording,  setFinishRecording] = useState(false)
+
+    useEffect(()=>{
+
+    },[isRecording])
+    function recoding(){
+
+    }
 
     return (
         <div className="h-screen">
@@ -50,7 +57,7 @@ const ChatPage = ({userName}) => {
                                     className="w-[250px] h-[250px]"
                                     preserveAspectRatio="xMidYMid meet"
                                 >
-                                    <circle cx="125" cy="125" r="125" fill="#fae4e1"></circle>
+                                    <circle cx="125" cy="125" r="125" fill="#fcedeb"></circle>
                                     <rect x="75" y="75" width="100" height="100" rx="5" fill="#e50039"></rect>
                                 </svg>
                             </button>
