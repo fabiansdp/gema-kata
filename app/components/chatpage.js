@@ -1,10 +1,13 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 
 const ChatPage = ({userName}) => {
     const [isRecording, setIsRecording] = useState(false)
     const [finishRecording,  setFinishRecording] = useState(false)
     const [permission, setPermission] = useState(false);
     const [stream, setStream] = useState(null);
+    const mediaRecorder = useRef(null);
+    const [audioChunks, setAudioChunks] = useState([]);
+    const [audio, setAudio] = useState(null);
 
     useEffect(()=>{
 
@@ -12,11 +15,34 @@ const ChatPage = ({userName}) => {
 
     const startRecording = async () => {
         setIsRecording(true)
+        const media = new MediaRecorder(stream, {mimeType:"audio/webm"})
+        mediaRecorder.current = media
+        mediaRecorder.current.start()
+
+        let localAudioChunks = [];
+        mediaRecorder.current.ondataavailable = (event) => {
+            if (typeof event.data === "undefined") return;
+            if (event.data.size === 0) return;
+            localAudioChunks.push(event.data);
+        };
+        setAudioChunks(localAudioChunks);
+
     }
 
     const stopRecording = async()=>{
         setIsRecording(false)
         setFinishRecording(true)
+
+        //stops the recording instance
+        mediaRecorder.current.stop();
+        mediaRecorder.current.onstop = () => {
+            //creates a blob file from the audiochunks data
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
+            //creates a playable URL from the blob file.
+            const audioUrl = URL.createObjectURL(audioBlob);
+            setAudio(audioUrl);
+            setAudioChunks([]);
+        };
     }
 
     const getMicrophonePermission = async () => {
@@ -50,7 +76,12 @@ const ChatPage = ({userName}) => {
                 <div className="h-screen flex justify-center items-center mx-auto">
                     {
                         !isRecording?(
-                            <button onClick={startRecording}>
+                            <button onClick={()=>{
+                                if(!permission){
+                                    getMicrophonePermission()
+                                }
+                                startRecording()
+                            }}>
                                 <svg
                                     width="200"
                                     height="200"
