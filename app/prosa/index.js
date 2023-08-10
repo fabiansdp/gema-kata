@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const prosaApiKey = process.env.NEXT_PUBLIC_PROSA_API_KEY
+const sttApiKey = process.env.NEXT_PUBLIC_STT_API_KEY
+const ttsApiKey = process.env.NEXT_PUBLIC_TTS_API_KEY
 
 export const prosaSTT = async (b64Audio) => {
     const payload = {
@@ -21,10 +22,37 @@ export const prosaSTT = async (b64Audio) => {
             payload, 
             {
                 headers: {
-                    "x-api-key": prosaApiKey
+                    "x-api-key": sttApiKey
                 }
             })
         return result.data
+    } catch (err) {
+        console.log(err)
+    }
+
+    return null
+}
+
+export const prosaTTS = async ({text}) => {
+    const payload = {
+        "config": {
+            "model": "tts-dimas-expressive",
+            "wait": true,
+            "audio_format": "opus"
+        },
+        "request": {
+            "text": text
+        }
+    }
+
+    try {
+        const result = await axios.post("https://api.prosa.ai/v2/speech/tts",
+            payload, {
+            headers: {
+                "x-api-key": ttsApiKey
+            }
+        })
+        return result
     } catch (err) {
         console.log(err)
     }
