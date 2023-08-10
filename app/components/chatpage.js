@@ -3,13 +3,38 @@ import {useEffect, useState} from "react";
 const ChatPage = ({userName}) => {
     const [isRecording, setIsRecording] = useState(false)
     const [finishRecording,  setFinishRecording] = useState(false)
+    const [permission, setPermission] = useState(false);
+    const [stream, setStream] = useState(null);
 
     useEffect(()=>{
 
     },[isRecording])
-    function recoding(){
 
+    const startRecording = async () => {
+        setIsRecording(true)
     }
+
+    const stopRecording = async()=>{
+        setIsRecording(false)
+        setFinishRecording(true)
+    }
+
+    const getMicrophonePermission = async () => {
+        if ("MediaRecorder" in window) {
+            try {
+                const streamData = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false,
+                });
+                setPermission(true);
+                setStream(streamData);
+            } catch (err) {
+                alert(err.message);
+            }
+        } else {
+            alert("The MediaRecorder API is not supported in your browser.");
+        }
+    };
 
     return (
         <div className="h-screen">
@@ -18,14 +43,14 @@ const ChatPage = ({userName}) => {
             </div>
 
             <div>
-
+                {}
             </div>
 
             {!finishRecording ? (
                 <div className="h-screen flex justify-center items-center mx-auto">
                     {
                         !isRecording?(
-                            <button>
+                            <button onClick={startRecording}>
                                 <svg
                                     width="200"
                                     height="200"
@@ -47,7 +72,7 @@ const ChatPage = ({userName}) => {
                                 </svg>
                             </button>
                         ):(
-                            <button>
+                            <button onClick={stopRecording}>
                                 <svg
                                     width="250"
                                     height="250"
