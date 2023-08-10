@@ -4,7 +4,7 @@ const Opening = ({setName}) =>{
     const [tmpName, tmpSetName] = useState("")
 
     return (
-        <div className="h-screen justify-center items-center text-center">
+        <div className="h-3/4 justify-center items-center text-center">
             <h3 className="font-bold text-2xl">Berbicara Dengan <br/> Siapa?</h3>
             <div className="flex justify-center items-center">
                 <input
