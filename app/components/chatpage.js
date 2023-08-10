@@ -8,6 +8,9 @@ const ChatPage = ({userName}) => {
     const mediaRecorder = useRef(null);
     const [audioChunks, setAudioChunks] = useState([]);
     const [audio, setAudio] = useState(null);
+    const [isLoading, setIsLoading] = useState(false)
+    const [aphasiaInput, setAphasiaInput] = useState(null)
+    const [predictionResult, setPredictionResult] = useState([])
 
     useEffect(()=>{
         getMicrophonePermission()
@@ -29,20 +32,32 @@ const ChatPage = ({userName}) => {
 
     }
 
+
+
+    const generateResult = async () => {
+        const generateTextFromAudio = async ({audio}) => {
+
+        }
+
+        const text = await generateTextFromAudio()
+    }
+
     const stopRecording = async()=>{
         setIsRecording(false)
         setFinishRecording(true)
 
         //stops the recording instance
-        mediaRecorder.current.stop();
         mediaRecorder.current.onstop = () => {
             //creates a blob file from the audiochunks data
-            const audioBlob = new Blob(audioChunks, { type: mimeType });
+            const audioBlob = new Blob(audioChunks, { mimeType:"audio/webm"});
             //creates a playable URL from the blob file.
             const audioUrl = URL.createObjectURL(audioBlob);
             setAudio(audioUrl);
             setAudioChunks([]);
+            setIsLoading(true)
         };
+        mediaRecorder.current.stop();
+
     }
 
     const getMicrophonePermission = async () => {
@@ -120,7 +135,17 @@ const ChatPage = ({userName}) => {
                         )
                     }
                 </div>
-            ):<></>}
+            ):<div className="flex">
+                {
+                    isLoading?
+                        <div>
+
+                        </div> :
+                        <div>
+
+                        </div>
+                }
+            </div>}
         </div>
     )
 }
