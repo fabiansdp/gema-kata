@@ -1,25 +1,35 @@
+import { prosaSTT } from "@/app/prosa";
 import {useEffect, useRef, useState} from "react";
 import CircularLoader from "@/app/components/circular_loading";
 import ResultCard from "@/app/components/chatComponent/resultCard";
 import SourceCard from "@/app/components/chatComponent/sourceCard";
 
+
 const ChatPage = ({userName}) => {
+    const mediaRecorder = useRef(null);
     const [isRecording, setIsRecording] = useState(false)
     const [finishRecording,  setFinishRecording] = useState(false)
     const [permission, setPermission] = useState(false);
     const [stream, setStream] = useState(null);
-    const mediaRecorder = useRef(null);
     const [audioChunks, setAudioChunks] = useState([]);
-    const [audio, setAudio] = useState(null);
     const [isLoading, setIsLoading] = useState(false)
     const [aphasiaInput, setAphasiaInput] = useState(null)
     const [predictionResult, setPredictionResult] = useState([])
+    const [messages, setMessages] = useState([])
 
     useEffect(()=>{
         getMicrophonePermission()
     },[permission])
 
-    const startRecording = async ({sdata}) => {
+    const blobToBase64 = (blob) => {
+        return new Promise((resolve, _) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    const startRecording = async () => {
         setIsRecording(true)
         const media = new MediaRecorder(stream, {mimeType:"audio/webm"})
         mediaRecorder.current = media
@@ -32,20 +42,17 @@ const ChatPage = ({userName}) => {
             localAudioChunks.push(event.data);
         };
         setAudioChunks(localAudioChunks);
-
     }
 
+    const generateResult = async (test) => {
+        const transcription = await prosaSTT(test)
 
-
-    const generateResult = async () => {
-        const generateTextFromAudio = async ({audFile}) => {
-
+        if (transcription.result.data.length > 0) {
+            setMessages(prevState => [...prevState, transcription.result.data[0].transcript])
         }
-
-        const text = await generateTextFromAudio({audFile : null})
     }
 
-    const stopRecording = async()=>{
+    const stopRecording = async() => {
         setIsRecording(false)
         setFinishRecording(true)
 
@@ -53,34 +60,34 @@ const ChatPage = ({userName}) => {
         mediaRecorder.current.onstop = () => {
             //creates a blob file from the audiochunks data
             const audioBlob = new Blob(audioChunks, { mimeType:"audio/webm"});
-            //creates a playable URL from the blob file.
-            const audioUrl = URL.createObjectURL(audioBlob);
-            setAudio(audioUrl);
-            setAudioChunks([]);
-            setIsLoading(true)
-            generateResult().finally(()=>{
-                setIsLoading(false)
+            blobToBase64(audioBlob).then(res => {
+                const base64 = res.split(',')[1];
+                setAudioChunks([])
+              
+                setIsLoading(true)
+                generateResult(base64)
+                .finally(()=>{
+                    setIsLoading(false)
+                })
             })
+          
         };
-        mediaRecorder.current.stop();
 
+        mediaRecorder.current.stop();
     }
 
     const getMicrophonePermission = async () => {
         if ("MediaRecorder" in window) {
             try {
-                console.log(navigator.mediaDevices)
                 const streamData = await navigator.mediaDevices.getUserMedia({
                     audio: true,
                     video: false,
                 });
-                console.log(2)
                 setPermission(true);
-                console.log(3)
                 setStream(streamData);
                 return streamData
+
             } catch (err) {
-                console.log(err)
                 alert(err.message);
             }
         } else {
@@ -93,11 +100,6 @@ const ChatPage = ({userName}) => {
             <div className="flex justify-center items-center my-3 mx-auto">
                 <ChatNavBar userName={userName}/>
             </div>
-
-            <div>
-                {}
-            </div>
-
             {!finishRecording ? (
                 <div className="h-screen flex justify-center items-center mx-auto">
                     {
@@ -141,7 +143,8 @@ const ChatPage = ({userName}) => {
                         )
                     }
                 </div>
-            ):<div className="flex">
+            ):
+            <div className="flex">
                 {
                     isLoading?
                         <div className="h-screen flex justify-center items-center mx-auto">
@@ -149,7 +152,9 @@ const ChatPage = ({userName}) => {
                         </div> : (
                             <div className="h-screen flex flex-col justify-center items-center mx-auto">
                                 <div className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
-                                    <SourceCard text={"Halo, Pak Smith, dulu Anda kerja sebagai apa?"}/>
+                                    {messages.map((item, idx) => 
+                                        <SourceCard text={item} key={idx}/>
+                                    )}
                                 </div>
                                 <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
                                     <div
