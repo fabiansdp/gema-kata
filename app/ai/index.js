@@ -59,3 +59,21 @@ export const prosaTTS = async ({text}) => {
 
     return null
 }
+
+export const generateAnswers = async(question, prompt) => {
+    const payload = {
+        "question": question,
+        "prompt": prompt
+    }
+
+    console.log(payload)
+
+    try {
+        const result = await axios.post("/api/completion", payload)
+        return result.data
+    } catch (err) {
+        console.log(err)
+    }
+
+    return null
+}
