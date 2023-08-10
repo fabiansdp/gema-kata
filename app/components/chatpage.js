@@ -1,4 +1,7 @@
 import {useEffect, useRef, useState} from "react";
+import CircularLoader from "@/app/components/circular_loading";
+import ResultCard from "@/app/components/chatComponent/resultCard";
+import SourceCard from "@/app/components/chatComponent/sourceCard";
 
 const ChatPage = ({userName}) => {
     const [isRecording, setIsRecording] = useState(false)
@@ -35,11 +38,11 @@ const ChatPage = ({userName}) => {
 
 
     const generateResult = async () => {
-        const generateTextFromAudio = async ({audio}) => {
+        const generateTextFromAudio = async ({audFile}) => {
 
         }
 
-        const text = await generateTextFromAudio()
+        const text = await generateTextFromAudio({audFile : null})
     }
 
     const stopRecording = async()=>{
@@ -55,6 +58,9 @@ const ChatPage = ({userName}) => {
             setAudio(audioUrl);
             setAudioChunks([]);
             setIsLoading(true)
+            generateResult().finally(()=>{
+                setIsLoading(false)
+            })
         };
         mediaRecorder.current.stop();
 
@@ -138,12 +144,27 @@ const ChatPage = ({userName}) => {
             ):<div className="flex">
                 {
                     isLoading?
-                        <div>
-
-                        </div> :
-                        <div>
-
-                        </div>
+                        <div className="h-screen flex justify-center items-center mx-auto">
+                            <CircularLoader/>
+                        </div> : (
+                            <div className="h-screen flex flex-col justify-center items-center mx-auto">
+                                <div className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
+                                    <SourceCard text={"Halo, Pak Smith, dulu Anda kerja sebagai apa?"}/>
+                                </div>
+                                <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
+                                    <div
+                                        className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
+                                    >
+                                        <p className="flex-grow-0 flex-shrink-0 text-sm font-bold text-right text-[#090a0a]">
+                                            Pilih tanggapanmu
+                                        </p>
+                                        <ResultCard text={" Dulu, saya bekerja di departemen pemasaran dengan sangat baik."}/>
+                                        <ResultCard text={"Saya dahulu berkarier di meja sebagai bagian dari tim marketing yang sangat baik."}/>
+                                        <ResultCard text={"Pada masa lalu, pekerjaan saya di meja terkait dengan bidang marketing dan hasilnya sangat baik."}/>
+                                    </div>
+                                </div>
+                            </div>
+                        )
                 }
             </div>}
         </div>
