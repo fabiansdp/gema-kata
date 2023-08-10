@@ -10,10 +10,10 @@ const ChatPage = ({userName}) => {
     const [audio, setAudio] = useState(null);
 
     useEffect(()=>{
+        getMicrophonePermission()
+    },[permission])
 
-    },[isRecording])
-
-    const startRecording = async () => {
+    const startRecording = async ({sdata}) => {
         setIsRecording(true)
         const media = new MediaRecorder(stream, {mimeType:"audio/webm"})
         mediaRecorder.current = media
@@ -48,13 +48,18 @@ const ChatPage = ({userName}) => {
     const getMicrophonePermission = async () => {
         if ("MediaRecorder" in window) {
             try {
+                console.log(navigator.mediaDevices)
                 const streamData = await navigator.mediaDevices.getUserMedia({
                     audio: true,
                     video: false,
                 });
+                console.log(2)
                 setPermission(true);
+                console.log(3)
                 setStream(streamData);
+                return streamData
             } catch (err) {
+                console.log(err)
                 alert(err.message);
             }
         } else {
@@ -76,12 +81,7 @@ const ChatPage = ({userName}) => {
                 <div className="h-screen flex justify-center items-center mx-auto">
                     {
                         !isRecording?(
-                            <button onClick={()=>{
-                                if(!permission){
-                                    getMicrophonePermission()
-                                }
-                                startRecording()
-                            }}>
+                            <button onClick={startRecording}>
                                 <svg
                                     width="200"
                                     height="200"
