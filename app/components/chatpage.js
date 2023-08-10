@@ -1,4 +1,4 @@
-import { prosaSTT } from "@/app/prosa";
+import { prosaSTT, generateAnswers } from "@/app/ai";
 import {useEffect, useRef, useState} from "react";
 import CircularLoader from "@/app/components/circular_loading";
 import ResultCard from "@/app/components/chatComponent/resultCard";
@@ -20,6 +20,16 @@ const ChatPage = ({userName}) => {
     useEffect(()=>{
         getMicrophonePermission()
     },[permission])
+
+    const getAnswers = async() => {
+        // Ganti ini ke pertanyaan dan jawaban
+        const completion = await generateAnswers(
+            "Apa yang dulu Anda kerjakan?",
+            "saya kerja kerja di marketing di meja sangat baik"
+        )
+
+        setPredictionResult(completion)
+    }
 
     const blobToBase64 = (blob) => {
         return new Promise((resolve, _) => {
@@ -149,29 +159,35 @@ const ChatPage = ({userName}) => {
                     isLoading?
                         <div className="h-screen flex justify-center items-center mx-auto">
                             <CircularLoader/>
-                        </div> : (
-                            <div className="h-screen flex flex-col justify-center items-center mx-auto">
-                                <div className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
-                                    {messages.map((item, idx) => 
-                                        <SourceCard text={item} key={idx}/>
-                                    )}
-                                </div>
-                                <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
-                                    <div
-                                        className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
-                                    >
-                                        <p className="flex-grow-0 flex-shrink-0 text-sm font-bold text-right text-[#090a0a]">
-                                            Pilih tanggapanmu
-                                        </p>
-                                        <ResultCard text={" Dulu, saya bekerja di departemen pemasaran dengan sangat baik."}/>
-                                        <ResultCard text={"Saya dahulu berkarier di meja sebagai bagian dari tim marketing yang sangat baik."}/>
-                                        <ResultCard text={"Pada masa lalu, pekerjaan saya di meja terkait dengan bidang marketing dan hasilnya sangat baik."}/>
-                                    </div>
+                        </div> 
+                    :
+                    (
+                        <div className="h-screen flex flex-col justify-center items-center mx-auto">
+                            <div className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
+                                {messages.map((item, idx) => 
+                                    <SourceCard text={item} key={idx}/>
+                                )}
+                            </div>
+                            <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
+                                <div
+                                    className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
+                                >
+                                    <p className="flex-grow-0 flex-shrink-0 text-sm font-bold text-right text-[#090a0a]">
+                                        Pilih tanggapanmu
+                                    </p>
+                                    {
+                                        predictionResult.map((item, idx) => 
+                                            <ResultCard text={item} key={idx}/>
+                                        )
+                                    }
                                 </div>
                             </div>
-                        )
+                        </div>
+                    )
                 }
             </div>}
+            {/* Ini tombol sementara untuk generate chatgpt nya */}
+            <button onClick={() => getAnswers()}>Generate answers</button>
         </div>
     )
 }
