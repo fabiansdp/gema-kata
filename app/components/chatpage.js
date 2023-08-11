@@ -23,16 +23,6 @@ const ChatPage = ({userName}) => {
         getMicrophonePermission()
     },[permission])
 
-    const getAnswers = async(questions, answers) => {
-        // Ganti ini ke pertanyaan dan jawaban
-        const completion = await generateAnswers(
-            questions,
-            answers
-        )
-
-        setPredictionResult(completion)
-    }
-
     const blobToBase64 = (blob) => {
         return new Promise((resolve, _) => {
             const reader = new FileReader();
@@ -149,7 +139,7 @@ const ChatPage = ({userName}) => {
                         if (item.role === "question") {
                             return <SourceCard text={item.message} key={idx}/>
                         } else {
-                            return <ResultCard text={item.message} key={idx}/>
+                            return <ResultCard onClick={(text) => {}} text={item.message} key={idx}/>
                         }
                     }
                     )}
