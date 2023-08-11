@@ -70,6 +70,8 @@ const ChatPage = ({userName}) => {
         
                 setPredictionResult(completion)
             }
+        } else {
+            alert("cannot detect sound")
         }
     }
 
