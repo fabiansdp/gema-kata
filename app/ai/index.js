@@ -33,7 +33,7 @@ export const prosaSTT = async (b64Audio) => {
     return null
 }
 
-export const prosaTTS = async ({text}) => {
+export const prosaTTS = async (text) => {
     const payload = {
         "config": {
             "model": "tts-dimas-expressive",
@@ -52,7 +52,7 @@ export const prosaTTS = async ({text}) => {
                 "x-api-key": ttsApiKey
             }
         })
-        return result
+        return result.data
     } catch (err) {
         console.log(err)
     }
