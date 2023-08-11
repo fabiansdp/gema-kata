@@ -3,6 +3,8 @@ import {useEffect, useRef, useState} from "react";
 import CircularLoader from "@/app/components/circular_loading";
 import ResultCard from "@/app/components/chatComponent/resultCard";
 import SourceCard from "@/app/components/chatComponent/sourceCard";
+import MicIcon from "@/app/components/button/mic";
+import StopIcon from "@/app/components/button/stop";
 
 
 const ChatPage = ({userName}) => {
@@ -16,6 +18,7 @@ const ChatPage = ({userName}) => {
     const [aphasiaInput, setAphasiaInput] = useState(null)
     const [predictionResult, setPredictionResult] = useState([])
     const [messages, setMessages] = useState([])
+    const [counter, setCounter] = useState(0)
 
     useEffect(()=>{
         getMicrophonePermission()
@@ -73,7 +76,8 @@ const ChatPage = ({userName}) => {
             blobToBase64(audioBlob).then(res => {
                 const base64 = res.split(',')[1];
                 setAudioChunks([])
-              
+
+                setCounter(counter+1)
                 setIsLoading(true)
                 generateResult(base64)
                 .finally(()=>{
@@ -110,82 +114,62 @@ const ChatPage = ({userName}) => {
             <div className="flex justify-center items-center my-3 mx-auto">
                 <ChatNavBar userName={userName}/>
             </div>
-            {!finishRecording ? (
-                <div className="h-screen flex justify-center items-center mx-auto">
-                    {
-                        !isRecording?(
-                            <button onClick={startRecording}>
-                                <svg
-                                    width="200"
-                                    height="200"
-                                    viewBox="0 0 250 250"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-[250px] h-[250px]"
-                                    preserveAspectRatio="none"
-                                >
-                                    <circle cx="125" cy="125" r="125" fill="#F2F8FF"></circle>
-                                    <circle cx="124.375" cy="124.375" r="78.125" fill="#006BE5"></circle>
-                                    <path
-                                        d="M149.083 117.833V125C149.083 138.853 137.853 150.083 124 150.083M124 150.083C110.147 150.083 98.9167 138.853 98.9167 125V117.833M124 150.083V160.833M109.667 160.833H138.333M124 135.75C118.063 135.75 113.25 130.937 113.25 125V99.9167C113.25 93.9797 118.063 89.1667 124 89.1667C129.937 89.1667 134.75 93.9797 134.75 99.9167V125C134.75 130.937 129.937 135.75 124 135.75Z"
-                                        stroke="white"
-                                        stroke-width="5"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    ></path>
-                                </svg>
-                            </button>
-                        ):(
-                            <button onClick={stopRecording}>
-                                <svg
-                                    width="250"
-                                    height="250"
-                                    viewBox="0 0 250 250"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-[250px] h-[250px]"
-                                    preserveAspectRatio="xMidYMid meet"
-                                >
-                                    <circle cx="125" cy="125" r="125" fill="#fcedeb"></circle>
-                                    <rect x="75" y="75" width="100" height="100" rx="5" fill="#e50039"></rect>
-                                </svg>
-                            </button>
-                        )
-                    }
-                </div>
-            ):
-            <div className="flex">
-                {
-                    isLoading?
-                        <div className="h-screen flex justify-center items-center mx-auto">
-                            <CircularLoader/>
-                        </div> 
-                    :
-                    (
-                        <div className="h-screen flex flex-col justify-center items-center mx-auto">
-                            <div className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
-                                {messages.map((item, idx) => 
-                                    <SourceCard text={item} key={idx}/>
-                                )}
-                            </div>
-                            <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
-                                <div
-                                    className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
-                                >
-                                    <p className="flex-grow-0 flex-shrink-0 text-sm font-bold text-right text-[#090a0a]">
-                                        Pilih tanggapanmu
-                                    </p>
-                                    {
-                                        predictionResult.map((item, idx) => 
-                                            <ResultCard text={item} key={idx}/>
-                                        )
-                                    }
+
+            {
+                counter <=0 ? <></> :(
+                    <div className="flex">
+                        {
+                            isLoading?
+                                <div className="h-3/5 flex justify-center items-center mx-auto">
+                                    <CircularLoader/>
                                 </div>
-                            </div>
+                                :
+                                (
+                                    <div className="h-3/5 flex flex-col justify-center items-center mx-auto">
+                                        <div className="flex flex-col justify-start items-center  mt-8 flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
+                                            {messages.map((item, idx) =>
+                                                <SourceCard text={item} key={idx}/>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
+                                            <div
+                                                className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
+                                            >
+                                                <p className="flex-grow-0 flex-shrink-0 text-sm font-bold text-right text-[#090a0a]">
+                                                    Pilih tanggapanmu
+                                                </p>
+                                                {
+                                                    predictionResult.map((item, idx) =>
+                                                        <ResultCard text={item} key={idx}/>
+                                                    )
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                        }
+                    </div>
+                )
+            }
+
+            <div className={counter <=0 ? "h-1/5 flex justify-center items-center mx-auto" :
+                "fixed z-50 w-full h-1/6 -translate-x-1/2 bg-white justify-center bottom-4 left-1/2 dark:bg-gray-700 dark:border-gray-600"}>
+                {
+                    !isRecording?(
+                        <div className="flex flex-col justify-center">
+                            <button onClick={startRecording}>
+                                <MicIcon h={counter <=0 ? 200 : 100} w={counter <=0 ? 200 : 100}/>
+                            </button>
                         </div>
+                    ):(
+                        <button onClick={stopRecording}>
+                            <StopIcon h={counter <=0 ? 200 : 100} w={counter <=0 ? 200 : 100}/>
+                        </button>
                     )
                 }
-            </div>}
+            </div>
+
+
             {/* Ini tombol sementara untuk generate chatgpt nya */}
             <button onClick={() => getAnswers()}>Generate answers</button>
         </div>
