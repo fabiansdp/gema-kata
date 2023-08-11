@@ -1,6 +1,9 @@
-const ResultCard = ( {text} ) => {
+const ResultCard = ({text, onClick, clickable=false}) => {
     return (
-        <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 w-[327px] gap-2">
+        <div 
+            onClick={(e) => onClick(text)} 
+            className={`${clickable ? "cursor-pointer" : ""} flex justify-start items-start flex-grow-0 flex-shrink-0 w-[327px] gap-2`}
+        >
             <div
                 className="flex flex-col justify-center items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2.5"
             >

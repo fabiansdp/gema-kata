@@ -9,26 +9,25 @@ import StopIcon from "@/app/components/button/stop";
 
 const ChatPage = ({userName}) => {
     const mediaRecorder = useRef(null);
-    const [isRecording, setIsRecording] = useState(false)
-    const [finishRecording,  setFinishRecording] = useState(false)
+    const [isQuestionRecording, setIsQuestionRecording] = useState(false)
+    const [isUserRecording, setIsUserRecording] = useState(false)
     const [permission, setPermission] = useState(false);
     const [stream, setStream] = useState(null);
     const [audioChunks, setAudioChunks] = useState([]);
     const [isLoading, setIsLoading] = useState(false)
-    const [aphasiaInput, setAphasiaInput] = useState(null)
     const [predictionResult, setPredictionResult] = useState([])
+    const [question, setQuestion] = useState(null)
     const [messages, setMessages] = useState([])
-    const [counter, setCounter] = useState(0)
 
     useEffect(()=>{
         getMicrophonePermission()
     },[permission])
 
-    const getAnswers = async() => {
+    const getAnswers = async(questions, answers) => {
         // Ganti ini ke pertanyaan dan jawaban
         const completion = await generateAnswers(
-            "Apa yang dulu Anda kerjakan?",
-            "saya kerja kerja di marketing di meja sangat baik"
+            questions,
+            answers
         )
 
         setPredictionResult(completion)
@@ -42,8 +41,13 @@ const ChatPage = ({userName}) => {
         });
     }
 
-    const startRecording = async () => {
-        setIsRecording(true)
+    const startRecording = async (role) => {
+        if (role === "question") {
+            setIsQuestionRecording(true)
+        } else {
+            setIsUserRecording(true)
+        }
+
         const media = new MediaRecorder(stream, {mimeType:"audio/webm"})
         mediaRecorder.current = media
         mediaRecorder.current.start()
@@ -57,17 +61,34 @@ const ChatPage = ({userName}) => {
         setAudioChunks(localAudioChunks);
     }
 
-    const generateResult = async (test) => {
+    const generateResult = async (test, role) => {
         const transcription = await prosaSTT(test)
 
         if (transcription.result.data.length > 0) {
-            setMessages(prevState => [...prevState, transcription.result.data[0].transcript])
+            const text = transcription.result.data[0].transcript
+            if (role === "question") {
+                setMessages(prevState => [...prevState, {
+                    "role": role,
+                    "message": text
+                }])
+                setQuestion(text)
+            } else {
+                const completion = await generateAnswers(
+                    question,
+                    text
+                )
+        
+                setPredictionResult(completion)
+            }
         }
     }
 
-    const stopRecording = async() => {
-        setIsRecording(false)
-        setFinishRecording(true)
+    const stopRecording = async(role) => {
+        if (role === "question") {
+            setIsQuestionRecording(false)
+        } else {
+            setIsUserRecording(false)
+        }
 
         //stops the recording instance
         mediaRecorder.current.onstop = () => {
@@ -77,9 +98,8 @@ const ChatPage = ({userName}) => {
                 const base64 = res.split(',')[1];
                 setAudioChunks([])
 
-                setCounter(counter+1)
                 setIsLoading(true)
-                generateResult(base64)
+                generateResult(base64, role)
                 .finally(()=>{
                     setIsLoading(false)
                 })
@@ -109,69 +129,95 @@ const ChatPage = ({userName}) => {
         }
     };
 
+    const selectAnswer = (text) => {
+        setMessages([...messages, {
+            "role": "user",
+            "message": text
+        }])
+        setPredictionResult([])
+    }
+
     return (
-        <div className="h-screen">
+        <div className="min-h-screen">
             <div className="flex justify-center items-center my-3 mx-auto">
                 <ChatNavBar userName={userName}/>
             </div>
 
-            {
-                counter <=0 ? <></> :(
-                    <div className="flex">
-                        {
-                            isLoading?
-                                <div className="h-3/5 flex justify-center items-center mx-auto">
-                                    <CircularLoader/>
-                                </div>
-                                :
-                                (
-                                    <div className="h-3/5 flex flex-col justify-center items-center mx-auto">
-                                        <div className="flex flex-col justify-start items-center  mt-8 flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
-                                            {messages.map((item, idx) =>
-                                                <SourceCard text={item} key={idx}/>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
-                                            <div
-                                                className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
-                                            >
-                                                <p className="flex-grow-0 flex-shrink-0 text-sm font-bold text-right text-[#090a0a]">
-                                                    Pilih tanggapanmu
-                                                </p>
-                                                {
-                                                    predictionResult.map((item, idx) =>
-                                                        <ResultCard text={item} key={idx}/>
-                                                    )
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
+            <div className="h-3/5 flex flex-col items-center mx-auto">
+                <div className="flex flex-col flex-grow-0 flex-shrink-0 w-[327px] gap-[35px]" >
+                    {messages.map((item, idx) => {
+                        if (item.role === "question") {
+                            return <SourceCard text={item.message} key={idx}/>
+                        } else {
+                            return <ResultCard text={item.message} key={idx}/>
                         }
-                    </div>
-                )
-            }
-
-            <div className={counter <=0 ? "h-1/5 flex justify-center items-center mx-auto" :
-                "fixed z-50 w-full h-1/6 -translate-x-1/2 bg-white justify-center bottom-4 left-1/2 dark:bg-gray-700 dark:border-gray-600"}>
-                {
-                    !isRecording?(
-                        <div className="flex flex-col justify-center">
-                            <button onClick={startRecording}>
-                                <MicIcon h={counter <=0 ? 200 : 100} w={counter <=0 ? 200 : 100}/>
-                            </button>
+                    }
+                    )}
+                </div>
+                {predictionResult.length > 0 ?
+                    <div className="flex flex-col justify-start items-end flex-grow-0 flex-shrink-0 gap-4">
+                        <div
+                            className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 relative gap-[15px]"
+                        >
+                            <p className="flex-grow-0 flex-shrink-0 text-sm mt-6 font-bold text-right text-[#090a0a]">
+                                Pilih tanggapanmu
+                            </p>
+                            {
+                                predictionResult.map((item, idx) =>
+                                    <ResultCard clickable={true} onClick={selectAnswer} text={item} key={idx}/>
+                                )
+                            }
                         </div>
-                    ):(
-                        <button onClick={stopRecording}>
-                            <StopIcon h={counter <=0 ? 200 : 100} w={counter <=0 ? 200 : 100}/>
-                        </button>
-                    )
+                    </div>
+                :
+                    <></>
+                }
+            </div>
+            <div className="flex">
+                {isLoading ?
+                    <div className="h-3/5 flex justify-center items-center mx-auto">
+                        <CircularLoader/>
+                    </div>
+                    : <></>
                 }
             </div>
 
-
-            {/* Ini tombol sementara untuk generate chatgpt nya */}
-            <button onClick={() => getAnswers()}>Generate answers</button>
+            <div className={"h-1/5 flex justify-center items-center mx-auto"}>
+                <div>
+                    <p>Question</p>
+                    {
+                        !isQuestionRecording ? 
+                        (
+                            <div className="flex flex-col justify-center">
+                                <button onClick={() => startRecording("question")}>
+                                    <MicIcon h={150} w={150}/>
+                                </button>
+                            </div>
+                        ):(
+                            <button onClick={() => stopRecording("question")}>
+                                <StopIcon h={150} w={150}/>
+                            </button>
+                        )
+                    }
+                </div>
+                <div>
+                    <p>Answer</p>
+                    {
+                        !isUserRecording ? 
+                        (
+                            <div className="flex flex-col justify-center">
+                                <button onClick={() => startRecording("user")}>
+                                    <MicIcon h={150} w={150}/>
+                                </button>
+                            </div>
+                        ):(
+                            <button onClick={() => stopRecording("user")}>
+                                <StopIcon h={150} w={150}/>
+                            </button>
+                        )
+                    }
+                </div>
+            </div>
         </div>
     )
 }
